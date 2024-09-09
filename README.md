@@ -1,3 +1,7 @@
+<h1>Website Link: http://alano-davin-loomandharvest.pbp.cs.ui.ac.id/</h1>
+
+<hr>
+
 <b>Explain how you implemented the checklist above step-by-step (not just following the tutorial).</b>
 
 When doing the assignment 2 I attempted to create the app and its functions like the tutorial. However, I attempted to expand my understanding by applying my own features and observing the effectiveness of my implementation.
@@ -68,8 +72,16 @@ Once this is done I switched the remote URL for my git such that I can push the 
 <b>Create a diagram that contains the request client to a Django-based web application and the response it gives, and explain the relationship between urls.py, views.py, models.py, and the html file.</b>
 ![Diagram](diagram.png)
 
-
+The urls.py is tasked with being the middleman between the user and the application. It tell Django which view or views.py file should interact with the user. Therefore, it acts as a sort of redirect for the views.py file. The views.py file is responsible for handling user requests, interacting with models, and rendering templates. The relationship of the views.py and other components lay within the models.py from which it retrieves objects and the HTML file where it displays said data. The models.py interacts with the views.py and the database. The models.py recieves instructions from the views.py and retrieves the needed data from the database. Finally, the HTML file is what the user gets to view the webpage on their broswer.
 
 Explain the use of git in software development!
+
+Git in software development has two main focuses to why it is used in software development which are collaboration and security. Git allows users and teams to share code and push their updates individually allowing for each member to work at their own pace while having the most updated version of their project. It also allows project managers to manage which code gets accepted, review push requests, and credit whoever implemented the change. This also works to distribute open-source software and free software. The security feature regards to code review, backups, and version control. Teams can review each others code before implementing it ensuring security among code projects. Backups and version control protects code from errors by allowing rollbacks and for version recalls in the event of an error.
+
 In your opinion, out of all the frameworks available, why is Django used as the starting point for learning software development?
+
+Django was chosen because it is an AIO (All in One) framework with clear documentation and a strong community. This allows any entry level developer to get into Django and if they are stuck they have many resources to help them overcome the issue. Furthermore, Django is secure providing advanced protection against common attacks. Django also promotes common practices in the industry and has proven to be very scalable. This means a learner can easily scale their project as they improve their skills or get more people to work with them.
+
 Why is the Django model called an ORM?
+
+Django is called an ORM (Object Relational Mapping) because it allows developers to access the database using Python objects, instead of raw SQL queries. It abstracts the process of interacting with a database by allowing objects to interact directly with database tables mapping it to the database concept. Thus, Django uses its model classes and its fields to map to the database table and columns. Django also allows for operations on the table like update and save without the need for SQL queries. The reason Django uses ORM is for productivity, security, and portability of web applications and code. This is done by allowing developers to focus on other concentrations while still making their database availble to SQL software. It also gives a layer of security against SQL injection attacks.
