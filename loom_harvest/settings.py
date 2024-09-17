@@ -56,7 +56,7 @@ ROOT_URLCONF = 'loom_harvest.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], # Adding the templates directory to the TEMPLATES setting
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

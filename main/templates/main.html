@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{project_name}}</title>
+{% extends 'base.html' %}
+
+{% block content %}
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,12 +12,64 @@
         p {
             font-size: 1.2em;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #32CD32;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        a button:hover {
+            background-color: #0056b3;
+        }
     </style>
-</head>
-<body>
-    <h1>{{project_name}}</h1>
-    <p>App Name: {{ app_name }}<p>
+
+    <h1>{{ project_name }}</h1>
+    <p>App Name: {{ app_name }}</p>
     <p>Developer: {{ developer_name }}</p>
     <p>Class: {{ class_name }}</p>
-</body>
-</html>
+    
+    {% if not products %}
+        <p>There are no products in the inventory.</p>
+    {% else %}
+        <table>
+            <tr>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Stock</th>
+                <th>Category</th>
+            </tr>
+    
+            {% for product in products  %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.price }}</td>
+                <td>{{ product.description }}</td>
+                <td>{{ product.stock }}</td>
+                <td>{{ product.category }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    
+    <br />
+    
+    <a href="{% url 'main:create_product' %}">
+        <button>Add New Product</button>
+    </a>
+{% endblock %}
