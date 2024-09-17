@@ -108,7 +108,7 @@ The `is_valid()` method in Django forms is used to validate  data submitted toe 
 
 The `csrf_token` is essential in Django forms to protect against Cross-Site Request Forgery (CSRF) attacks. CSRF is a type of attack where a malicious website tricks a user’s browser into submitting a form or request on another website where the user is authenticated. Django's `csrf_token` ensures that form submissions originate from the legitimate website by generating a unique token for each session, which must be included in the form submission. If the token is missing or incorrect, Django rejects the request.
 
-The absence of the `csrf_token` will aloow an attacker or third-party to submit a dangerous form which grants them admin powers allowing them to trick the website into thinking they can authorize changes and view data. Since they become an authenticated user they can trick the form into changing settings, deleting data, and many more harmful actions. The vulnerabilityy could allow hackers to stal data and access even deeeper parts of the website compromising the website. Therefore, there is a need for a `csrf_token` to constantly authenticate and protect the user's and system's ability to accept and return forms on both ends.
+The absence of the `csrf_token` will allow an attacker or third-party to submit a dangerous form which grants them admin powers allowing them to trick the website into thinking they can authorize changes and view data. Since they become an authenticated user they can trick the form into changing settings, deleting data, and many more harmful actions. The vulnerabilityy could allow hackers to stal data and access even deeeper parts of the website compromising the website. Therefore, there is a need for a `csrf_token` to constantly authenticate and protect the user's and system's ability to accept and return forms on both ends.
 
 
 <b>Explain how you implemented the checklist above step-by-step (not just following the tutorial).</b>
@@ -264,10 +264,17 @@ After testing and finishing the steps the app ran as intended.
 <h3>Postman Screenshots</h3>
 <b>Access the four URLs in point 2 using Postman, take screenshots of the results in Postman, and add them to README.md.</b>
 <h2>JSON</h2>
+
 ![POSTMANJSON](POSTMANJSON.png)
+
 <h2>XML</h2>
+
 ![POSTMANXML](POSTMANXML.png)
+
 <h2>JSON by ID</h2>
+
 ![POSTMANJSONbyID](POSTMANJSONbyID.png)
+
 <h2>XML by ID</h2>
+
 ![POSTMANXMLbyID](POSTMANXMLbyID.png)
