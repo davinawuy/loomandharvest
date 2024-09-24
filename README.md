@@ -278,3 +278,116 @@ After testing and finishing the steps the app ran as intended.
 <h2>XML by ID</h2>
 
 ![POSTMANXMLbyID](POSTMANXMLbyID.png)
+
+<hr>
+
+<h2><b>Assignment 4</b></h2>
+
+<b>What is the difference between HttpResponseRedirect() and redirect()?</b>
+
+`HttpResponseRedirect()` is a class in Django that handles HTTP redirects by sending a 302 status code, along with the new URL, to the browser. This requires a full URL as the function's argument and will programmatically control where a user redirects after a request is sent. On the other hand, `redirect()` is a helper function by Django that simplifies the same process by allowing you to pass either a URL string or a URL name from `urls.py`, and even a model object can be parsed. The `redirect()` function automatically determines the appropriate URL to redirect to, making it easier to use.
+
+<b>Explain how the MoodEntry model is linked with User!</b>
+
+The `Product` model is linked to the `User` model through a foreign key relationship using Django's built-in `User` model from `django.contrib.auth.models`. This means each `Product` is associated with a specific user, allowing users to have individual Product data. This makes a one to many relationship between the User and the Products.
+
+<b>What is the difference between authentication and authorization, and what happens when a user logs in? Explain how Django implements these two concepts.</b>
+
+Authentication refers to the process of verifying a user's identity, while authorization determines what resources or actions a user is allowed to access once authenticated. When a user logs in, Django first authenticates the credentials against the database, and if successful, the user is marked as authenticated. Django implements authentication using middleware that manages user sessions, allowing logged-in users to be tracked across requests. Authorization in Django is handled through permissions, either assigned to users or groups, determining what actions they are allowed to perform based on their role or permissions.
+
+<b>How does Django remember logged-in users? Explain other uses of cookies and whether all cookies are safe to use.</b>
+
+Django remembers logged-in users by using session cookies, which store a unique session ID in the user’s browser. This session ID is associated with the user’s data on the serveror localhost, allowing Django to remember the user across multiple requests. Cookies have other uses, such as storing preferences, tracking analytics, and personalizing content. However, not all cookies are safe—some cookies, particularly third-party or tracking cookies, may be used to gather information about users without their consent.
+
+<b>Explain how did you implement the checklist step-by-step (apart from following the tutorial)</b>
+
+To begin I created a login function for the web app such that user's can input their credentials and login to the website and reach the main page through the main.html.
+
+```python
+    user = form.get_user()
+    login(request, user)
+    return redirect('main:show_main')
+```
+
+Then I proceeded to make a login.html file that I placed in the main/templates and I ensured that I included the csrf_token to ensure that each login or session can be verified.
+
+```python
+    <form method="POST" action="">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+        <tr>
+        <td></td>
+        <td><input class="btn login_btn" type="submit" value="Login" /></td>
+        </tr>
+    </table>
+    </form>
+```
+
+This provides security for the user and website itself only granting accessed to the right user.
+
+After making a login fuction which will redirect valid users to the main.html page I had to make a way for them to either terminate their session or switch users. To implement this I created the logout function which would terminate the current session and allow for other users to login.
+
+```python
+def logout_user(request):
+    logout(request)
+    return redirect('main:login')
+```
+
+This code exist within the views.py section of the code like the login function. The difference is that it will use from the Django package the logout function terminating the session and sending users to the login.html page. To complement this I added a logout button on the main page so users can sign out.
+
+Next I had to restrict access so that only verified users can access the page. To do this I used:
+```python
+@login_required(login_url='/login')
+def show_main(request):
+```
+This was done so that the show_main function will only ever run should a login be valid. THis gurantees that no unregistered users can access the page. I also asked for cookies related to their last login session to ensure that each user atleast has that to be let into the page.
+
+```python
+if form.is_valid():
+    user = form.get_user()
+    login(request, user)
+    response = HttpResponseRedirect(reverse("main:show_main"))
+    response.set_cookie('last_login', str(datetime.datetime.now()))
+    return response
+```
+
+Within the login_user function so that each time they login and a valid form is checked it will update their cookies and redirect them to the main page.
+
+Finally I modified the Product in models.py to have the variable user as shown in:
+
+```python
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+```
+
+Next I created the register.html and register_user function so that every new user can register themselves to the webpage. Once the user registered correctly it will allow them to return to the login page and thus login.
+
+```python
+def register_user(request):
+    form = UserCreationForm()
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Account was created for ' + form.cleaned_data['username'])
+            return redirect('main:login')
+    context = {'form':form}
+    return render(request, 'register.html', context)
+```
+
+I then had to make changes to the urls.py so that each component can communicate with one another and present the correct data. To do this I edited the url pattern and added the following:
+
+```python
+    path('register/', register_user, name='register'),
+    path('login/', login_user, name='login'),
+    path('logout/', logout_user, name='logout'),
+
+```
+
+After this I migrated everything and modified the settings.py so that it will work with the changes with the code
+```python
+import os
+
+PRODUCTION = os.getenv("PRODUCTION", False)
+DEBUG = not PRODUCTION
+```

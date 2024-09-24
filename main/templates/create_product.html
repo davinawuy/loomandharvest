@@ -1,6 +1,44 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+<style>
+  body {
+      font-family: Arial, sans-serif;
+  }
+  h1 {
+      font-size: 2em;
+      font-weight: bold;
+  }
+  p {
+      font-size: 1.2em;
+  }
+  table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+  }
+  th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+  }
+  th {
+      background-color: #f4f4f4;
+  }
+  a button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #32CD32;
+      color: white;
+      border: none;
+      cursor: pointer;
+  }
+  a button:hover {
+      background-color: #0056b3;
+  }
+</style>
+
 <h1>Add New Product</h1>
 
 <form method="POST">
