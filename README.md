@@ -392,8 +392,7 @@ PRODUCTION = os.getenv("PRODUCTION", False)
 DEBUG = not PRODUCTION
 ```
 
-Login Credentials for Testing
-User: dummy1
-Password: Thisisaduummy1
-User: dummy3
-Password: Thisisadummy3
+| User    | Password        |
+|---------|-----------------|
+| dummy1  | Thisisaduummy1  |
+| dummy3  | Thisisaduummy3  |
