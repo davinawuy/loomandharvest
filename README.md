@@ -396,3 +396,107 @@ DEBUG = not PRODUCTION
 |---------|-----------------|
 | dummy1  | Thisisaduummy1  |
 | dummy3  | Thisisaduummy3  |
+
+<hr>
+
+<h2><b>Assignment 5</b></h2>
+
+<b>If there are multiple CSS selectors for an HTML element, explain the priority order of these CSS selectors!</b>
+
+When multiple CSS selectors apply to an HTML element, their priority is determined by a concept called specificity. Specificity is calculated based on the type of selector used. Inline styles, which are defined directly on an element, have the highest priority. After inline styles, IDs are given the most weight, followed by class selectors, pseudo-classes, and attribute selectors. Finally, element selectors and pseudo-elements have the lowest priority. If two or more selectors have the same specificity, the one that appears later in the CSS file will override the earlier one due to the latest one being more recent.
+
+<b>Why does responsive design become an important concept in web application development? Give examples of applications that have and have not implemented responsive design!</b>
+
+Responsive design is critical in web application development because it ensures that a website or application functions and looks good across different devices, including desktops, tablets, and mobile phones. As people access the web through different screen sizes, from large monitors to small smartphones, it's essential to ensure that the user experience remains consistent and effective across all devices. Responsive design employs techniques such as flexible grids, media queries, and fluid images to adapt the layout and content to different screen sizes. On the other hand, some older websites or applications that have not yet adopted responsive design may appear broken or difficult to navigate on mobile devices, often requiring zooming and excessive scrolling. 
+
+<b>Explain the differences between margin, border, and padding, and how to implement these three things!</b>
+
+Margin, border, and padding are three essential properties in CSS that define the space around elements. Margin refers to the space outside the element's border, controlling the distance between the element and its neighboring elements. It is used to create space around an element. Padding, on the other hand, refers to the space inside the element's border, between the content and the element's edge. It helps in controlling the spacing between the element's content and its boundary. The border is the line between the margin and the padding, surrounding the element itself. It can be styled with various widths, colors, and patterns to give visual emphasis to the element. For example, an element can have padding to ensure text doesn’t touch its edges, a border to give it a defined boundary, and margin to create space between it and other elements.
+
+<b>Explain the concepts of flexbox and grid layout along with their uses!</b>
+
+Flexbox and grid layout are two powerful CSS tools used for designing responsive web layouts. Flexbox, or Flexible Box Layout, is ideal for creating one-dimensional layouts, meaning it is well-suited for organizing items in either a row or column. It allows for easy alignment, distribution of space, and adaptability of elements within a container. Flexbox is particularly useful for layouts that require elements to adjust dynamically to the available space, such as navigation bars or toolbars, where items need to be spaced evenly or aligned along a central axis.
+
+Grid layout, on the other hand, is a two-dimensional layout system that allows developers to design complex web layouts involving both rows and columns. Unlike Flexbox, which only works in one direction at a time, Grid allows for full control over both axes simultaneously. This makes it highly suitable for page layouts that require a well-structured grid, such as gallery layouts, dashboards, or magazine-style pages. Grid layout excels at designing large-scale layouts where elements need to be placed with precise control over both their row and column positioning. Both systems can be combined in modern web design to create flexible, responsive layouts that work across different screen sizes.
+
+<b>Explain how you implemented the checklist above step-by-step (not just following the tutorial)!</b>
+
+The first step I took in implementing this assignment was applying tailwind into my code. I chose tailwind over bootstrap since I found that tailwind was easier and more upto date in terms of when it was released. To do this I added the following code into my base.html:
+```python
+<script src="https://cdn.tailwindcss.com">
+```
+Adding this to my base.html will apply it to all my html files since every file extends from base.html thus allowing me to use tailwind.
+
+After I applied tailwind to all my files I then moved on to creating my edit and delete functions for the data. To do this I started with the delete product function since it does not require its own html file to function. To delete the product I simply attached each product in the main.html with a delete button which is binded to their uuid. The function to delete will take their id and parse it to find the item to delete. Once found it will simply delete the entire item removing from the table. Unlike the tutorial I added a message to notify the user wheteher their transaction was succesful or not. I did this by throwing an error message and later using and conditional statement to display the message's nature which is delete. The final code looked like the following:
+```python
+def delete_Product(request, id):
+    product = Product.objects.get(pk=id)
+    product_name = product.name
+    product.delete()
+    # Set the delete message as an error (which we will style as red)
+    messages.error(request, f'Product "{product_name}" was deleted successfully!')
+    return HttpResponseRedirect(reverse('main:show_main'))
+```
+
+To compliment the fuctionality of the messages offered by the delete function I also incorporated the message function to also work on the create_product such that when a succesful product instance is added to the database a message will notify the users. This was done with the code line:
+
+```python
+    messages.success(request, f'Product "{product.name}" was created successfully!')
+```
+
+Finally, I created the edit_product function by following the tutorial. In this instance I applied the same concept as the delete_product but instead of deleting the product after calling it I instead edited it through the form. I also added the success message here for a case where the edit of the data was succesful.
+
+```python
+def edit_Product(request, id):
+    # Get product entry based on id, raise 404 if not found
+    product = get_object_or_404(Product, pk=id)
+
+    # Set product entry as an instance of the form
+    form = ProductForm(request.POST or None, instance=product)
+
+    if form.is_valid() and request.method == "POST":
+        # Save form and return to the main page
+        form.save()
+        # Add success message after product edit
+        messages.success(request, f'Product "{product.name}" was edited successfully!')
+        return HttpResponseRedirect(reverse('main:show_main'))
+
+    context = {'form': form, 'product': product}
+    return render(request, "edit_Product.html", context)
+```
+
+Of course adding a message function requried that I gave the website a way to display this. I used an elif stataement to determine whether the color of the notification should be green or red based on whether they are an error or not from the message I raised within the function. I also added this message feature to the register page of the website.
+
+```html
+
+    {% if messages %}
+    <div class="mt-4">
+      {% for message in messages %}
+        {% if message.tags == "success" %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          {{ message }}
+        </div>
+        {% elif message.tags == "error" %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          {{ message }}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    
+```
+
+To display the data I was inspired by the tutorial to make cards to display the data. However, one thing I did not agree with was the design and formatting of the cards. So I designed a smaller and more concise card. I then created two html files a card_product.html and card_info.html to display the cards and data. I also added a minor animation detail different from the tutorial's website with the rotate function to indicate which card is being selected.
+
+```html
+    <div class="relative top-5 bg-gray-900 shadow-md rounded-lg mb-2 break-inside-avoid flex flex-col border-2 border-gray-700 transform transition-transform duration-300 hover:rotate-1" style="max-width: 280px;">
+```
+
+I then worked on the styling of the website. I created a static folder and allowed the settings.py detect it. I updated the middleware to accomodate all the new functions such as reading the css files and to view the media. After modfying the settings.py I created a static folder in the root directory called static. Inside I made two subdirectories image and css. Here I stored the the image media I intended to put in my website and I stored the global.css. I had to refrence the css to the base.html so it would be applied everywhere. With the code:
+
+```html
+    <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
+```
+
+After this I made a navbar.html and made it be included it every html file where it is applicable with the include tag in the content block at the top of each website. Once this was complete I was done with the website, I then just styled every page with a consistent dark theme inspired the popular dark theme on most systems. To do this I just manipulated the css in each local page. I change bg colors to fit the dark theme; I lightened text to contrast the text and many other changes.

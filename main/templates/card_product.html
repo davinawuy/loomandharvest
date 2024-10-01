@@ -1,0 +1,19 @@
+<div class="relative break-inside-avoid">
+    <div class="relative top-5 bg-gray-900 shadow-md rounded-lg mb-2 break-inside-avoid flex flex-col border-2 border-gray-700 transform transition-transform duration-300 hover:rotate-1" style="max-width: 280px;">
+        <div class="bg-gray-800 text-gray-300 p-2 rounded-t-lg border-b-2 border-gray-700">
+            <h3 class="font-bold text-lg mb-1">{{ product.name }}</h3>
+            <p class="text-gray-400 text-sm">Price: ${{ product.price }}</p>
+        </div>
+        <div class="p-2">
+            <p class="font-semibold text-md mb-1">Description</p>
+            <p class="text-gray-400 text-sm mb-1">{{ product.description }}</p>
+            <p class="text-gray-400 font-semibold text-sm mb-1">Stock: {{ product.stock }}</p>
+            <p class="text-gray-400 font-semibold text-sm mb-1">Category: {{ product.category }}</p>
+
+            <div class="mt-2 flex justify-between">
+                <a href="{% url 'main:edit_Product' product.pk %}" class="bg-blue-500 hover:bg-blue-600 text-white rounded-md py-1 px-3 text-sm transition duration-300">Edit</a>
+                <a href="{% url 'main:delete_Product' product.pk %}" class="bg-red-500 hover:bg-red-600 text-white rounded-md py-1 px-3 text-sm transition duration-300">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
