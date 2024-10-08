@@ -500,3 +500,205 @@ I then worked on the styling of the website. I created a static folder and allow
 ```
 
 After this I made a navbar.html and made it be included it every html file where it is applicable with the include tag in the content block at the top of each website. Once this was complete I was done with the website, I then just styled every page with a consistent dark theme inspired the popular dark theme on most systems. To do this I just manipulated the css in each local page. I change bg colors to fit the dark theme; I lightened text to contrast the text and many other changes.
+
+<hr>
+
+<h2><b>Assignment 6</b></h2>
+
+<b>Benefits of Using JavaScript in Developing Web Applications?</b>
+JavaScript can aid in developing web applications because it enables dynamic elements directly within the browser, providing users with real-time responsiveness. JavaScript can run on the client side, reducing server load and allowing smoother, faster user interactions. Its versatility, including libraries and frameworks like React or Vue.js, supports modern front-end development, making it easier to create features and scalable applications with enhanced user experiences. Moreover, JavaScript enables asynchronous programming, which facilitates the handling of data-driven tasks like API calls without disrupting the user interface.<b>Why We Need to Use await When Calling fetch?</b>
+
+<b>Why We Need to Use await When Calling fetch?</b>
+The use of await when calling fetch is crucial because fetch is asynchronous, meaning it returns a promise that resolves when the network request is complete. If await is not used, the program would continue executing the next lines of code without waiting for the response, which could result in incomplete data processing or unexpected errors. By using await, we ensure the function pauses until the fetch call completes, allowing the program to handle the response correctly before proceeding.
+
+<b>Why We Need to Use the csrf_exempt Decorator for AJAX POST?</b>
+The csrf_exempt decorator is necessary on views used for AJAX POST requests to bypass Django's CSRF protection, which is designed to prevent unauthorized POST requests. Since AJAX calls typically don’t include the CSRF token automatically Django would block such requests without the token causing a failure. The csrf_exempt decorator disables this validation, allowing the view to accept the AJAX request without raising a CSRF error.
+
+<b>Why Input Sanitization Must Be Done on the Back-End in Addition to the Front-End?</b>
+User input sanitization should also be done on the back-end, even if sanitization occurs on the front-end, because client-side validation can be bypassed. Users could manipulate client-side code or send requests directly to the server, exposing the system to injection attacks or other vulnerabilities. By sanitizing input on the server, the system ensures that data entering the application is safe, regardless of how it is submitted. This layered approach strengthens security and protects against potential exploits.
+
+<b>Why Input Sanitization Must Be Done on the Back-End in Addition to the Front-End?</b>
+User input sanitization should also be done on the back-end, even if sanitization occurs on the front-end, because client-side validation can be bypassed. Users could manipulate client-side code or send requests directly to the server, exposing the system to injection attacks or other vulnerabilities. By sanitizing input on the server, the system ensures that data entering the application is safe, regardless of how it is submitted. This layered approach strengthens security and protects against potential exploits.
+
+<b>Checklist Implementation</b>
+
+I needed to setup the AJAX GET function in the views.py section of the code by first changing how the XML and JSON is taken so that it was based on the user accessing the data. In this case I will use the json version. Since the filter is by user request it will only get based of the user which is added on the data entry. This filtering ensures that each access is done so safely and only based on what that users own.
+
+```python
+def show_xml(request):
+    data = Product.objects.filter(user=request.user)  # Fetch all Product objects
+    return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+
+def show_json(request):
+    data = Product.objects.filter(user=request.user)  # Fetch all Product objects
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+```
+
+I then made the AJAX POST to implement the create-ajax function based on the specifications of the task. To POST through AJAX I followed the tutorial and adapted the fields accordingly. I added the needed decorators to ensure that the GET is done securely. Furthermore I implemented the strip tags for each non-integer field so that each entry is done securely. 
+
+```python
+@csrf_exempt
+@require_POST
+def add_Product_ajax(request):
+    name = strip_tags(request.POST.get("name"))
+    price = request.POST.get("price")
+    description = strip_tags(request.POST.get("description"))
+    stock = request.POST.get("stock")
+    category = strip_tags(request.POST.get("category", 'Uncategorized'))
+    user = request.user
+
+    # Create new Product
+    new_product = Product(
+        name=name,
+        price=price,
+        description=description,
+        stock=stock,
+        category=category,
+        user=user
+    )
+    new_product.save()
+
+    return HttpResponse(b"CREATED", status=201)
+```
+
+I need to then path the new function to the urls.py so that it can communicate between the html and the functions. To achieve this I added the path as follows into the urls.py
+
+```python
+    path('add-Product-ajax/', add_Product_ajax, name='add_Product_ajax'),
+```
+
+Finally, I had to implement all these functions into the final product. To do this I implemented the needed changes into the html file. To adapt the functions into the html file I had to use javascript and script tags to indicate where the script would start and the contents of it.
+
+```javascript
+<script>
+async function getProductEntries() {
+    return fetch("{% url 'main:show_json' %}") 
+        .then(response => response.json())
+        .catch(error => console.error('Error fetching products:', error));
+}
+
+  async function refreshProductEntries() {
+        document.getElementById("product_entry_cards").innerHTML = "";
+        document.getElementById("product_entry_cards").className = "";
+        const productEntries = await getProductEntries(); // Fetch product entries
+        let htmlString = "";
+        let classNameString  = "";
+
+        if (productEntries.length === 0) {
+          classNameString  = "flex flex-col items-center justify-center min-h-[24rem] p-6";
+            htmlString = `
+            <div class="flex flex-col items-center justify-center min-h-[24rem] p-6">
+                <img src="{% static 'image/sad.png' %}" alt="No products available" class="w-32 h-32 mb-4"/>
+                <p class="text-center text-gray-600 mt-4">No products available yet.</p>
+            </div>
+            `;
+        } else {
+          classNameString = "columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 w-full";
+productEntries.forEach((item) => {
+    htmlString += `
+    <div class="relative break-inside-avoid w-3/4 sm:w-5/6 lg:w-4/5 mx-auto">
+        <div class="relative top-5 bg-[#1f1f1f] shadow-md rounded-lg mb-6 break-inside-avoid flex flex-col border-2 border-purple-400 transition-transform duration-300 transform hover:rotate-3"> 
+            <div class="bg-[#2a2a2a] text-gray-200 p-4 rounded-t-lg border-b-2 border-purple-400">
+                <h3 class="font-bold text-xl mb-2">${item.fields.name}</h3>
+                <p class="text-gray-400">$${item.fields.price}</p>
+            </div>
+            <div class="p-4">
+                <p class="font-semibold text-lg mb-2 text-gray-300">Category</p>
+                <p class="text-gray-400 mb-2">${item.fields.category ? item.fields.category : 'Uncategorized'}</p>
+                <p class="font-semibold text-lg mb-2 text-gray-300">Description</p>
+                <p class="text-gray-400 mb-2">${item.fields.description}</p>
+                <div class="mt-4">
+                    <p class="text-gray-300 font-semibold mb-2">Stock Available</p>
+                    <span class="text-sm font-semibold inline-block py-1 px-2 rounded-full bg-green-800 text-green-300">
+                        ${item.fields.stock > 0 ? item.fields.stock + " items in stock" : "Out of stock"}
+                    </span>
+                </div>
+            </div>
+            <div class="flex justify-end p-4 space-x-2">
+                <a href="/edit-Product/${item.pk}" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full p-2 transition duration-300 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                </a>
+                <a href="/delete-Product/${item.pk}" class="bg-red-700 hover:bg-red-600 text-white rounded-full p-2 transition duration-300 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+    `;
+});
+
+
+
+        }
+        document.getElementById("product_entry_cards").className = classNameString;
+        document.getElementById("product_entry_cards").innerHTML = htmlString;
+    }
+
+    refreshProductEntries();
+
+    const modal = document.getElementById('crudModal');
+    const modalContent = document.getElementById('crudModalContent');
+
+    function showModal() {
+        const modal = document.getElementById('crudModal');
+        const modalContent = document.getElementById('crudModalContent');
+
+        modal.classList.remove('hidden'); 
+        setTimeout(() => {
+        modalContent.classList.remove('opacity-0', 'scale-95');
+        modalContent.classList.add('opacity-100', 'scale-100');
+        }, 50); 
+    }
+
+    function hideModal() {
+        const modal = document.getElementById('crudModal');
+        const modalContent = document.getElementById('crudModalContent');
+
+        modalContent.classList.remove('opacity-100', 'scale-100');
+        modalContent.classList.add('opacity-0', 'scale-95');
+
+        setTimeout(() => {
+        modal.classList.add('hidden');
+        }, 150); 
+    }
+
+    document.getElementById("cancelButton").addEventListener("click", hideModal);
+    document.getElementById("closeModalBtn").addEventListener("click", hideModal);
+
+    function addProductEntry() {
+    fetch("{% url 'main:add_Product_ajax' %}", {
+        method: "POST",
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}', // Ensure CSRF token is added
+        },
+        body: new FormData(document.querySelector('#productEntryForm')),
+    })
+    .then(response => {
+        if (response.ok) {
+            refreshProductEntries(); // Refresh product list after adding
+            hideModal(); // Hide modal
+            document.getElementById("productEntryForm").reset(); // Reset form
+        } else {
+            console.error("Error adding product");
+        }
+    })
+    .catch(error => console.error('Error:', error));
+
+    return false;
+}
+
+document.getElementById("productEntryForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    addProductEntry();
+});
+
+
+
+</script>
+```
+
+The functions I have created includes the ability to use AJAX GET and recieve the data in JSON form. This is supplemented by the modifications in the views.py to only take the values by filter 'user' so that it is still done safely. Then there is the refreshProductEntries function which is designed to refresh asychronously. How this worked was first displaying each data in the form of a card through the html snippet. First it strips all existing data and the fetches the newest data in the card form. It has to be asynchronous since we are waiting for the promise that the data is fetched properly. The remaining function is designed to display the modal which is the main component of the AJAX POST function. This is implmeneted in the form of a button which substitutes the previous create function. WHenever the button is pressed a new modal is made and with the aid of the views.py it will create a new entry when the data is valid. Strip tags are used to prevent XSS attacks by striping the data of the malicious data.
