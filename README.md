@@ -534,11 +534,9 @@ def show_json(request):
     return HttpResponse(serializers.serialize("json", data), content_type="application/json")
 ```
 
-I then made the AJAX POST to implement the create-ajax function based on the specifications of the task. To POST through AJAX I followed the tutorial and adapted the fields accordingly. I added the needed decorators to ensure that the GET is done securely. Furthermore I implemented the strip tags for each non-integer field so that each entry is done securely. 
+I then made the AJAX POST to implement the create-ajax function based on the specifications of the task. To POST through AJAX I followed the tutorial and adapted the fields accordingly. I added the needed decorators to ensure that the GET is done securely. Furthermore I implemented the strip tags for each non-integer field so that each entry is done securely in case an attack attempt exists. I had to deviate from the tutorial to show the message correctly so I attempted to use JSONResponse and Python to raise errors and deliver the needed messages based on the error. I admit it may not be the best solution but it has validated and rejected as intended. With the help of a message container in the HTML I was able to display the messages and errors in the HTML itself with the help of the javascript.
 
 ```python
-@csrf_exempt
-@require_POST
 def add_Product_ajax(request):
     name = strip_tags(request.POST.get("name"))
     price = request.POST.get("price")
@@ -547,18 +545,51 @@ def add_Product_ajax(request):
     category = strip_tags(request.POST.get("category", 'Uncategorized'))
     user = request.user
 
-    # Create new Product
-    new_product = Product(
-        name=name,
-        price=price,
-        description=description,
-        stock=stock,
-        category=category,
-        user=user
-    )
-    new_product.save()
+    # Validate inputs
+    try:
+        if not name.strip() or not description.strip() or not category.strip():
+            return JsonResponse({'error': 'Name, description, and category cannot be empty.'}, status=400)
 
-    return HttpResponse(b"CREATED", status=201)
+        try:
+            price = float(price)
+            if price < 0:
+                raise ValueError
+        except ValueError:
+            return JsonResponse({'error': 'Price must be a positive number.'}, status=400)
+
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+        except ValueError:
+            return JsonResponse({'error': 'Stock must be a non-negative integer.'}, status=400)
+
+        # Create new Product
+        new_product = Product(
+            name=name,
+            price=price,
+            description=description,
+            stock=stock,
+            category=category,
+            user=user
+        )
+
+        # Validate model fields
+        new_product.full_clean()
+        new_product.save()
+
+        return JsonResponse({'message': 'Product created successfully'}, status=201)
+
+    except ValidationError as e:
+        error_messages = []
+        for field, errors in e.message_dict.items():
+            for error in errors:
+                error_messages.append(f"{field}: {error}")
+        return JsonResponse({'error': ' '.join(error_messages)}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'error': 'An error occurred while adding the product.'}, status=400)
+
 ```
 
 I need to then path the new function to the urls.py so that it can communicate between the html and the functions. To achieve this I added the path as follows into the urls.py
@@ -567,25 +598,25 @@ I need to then path the new function to the urls.py so that it can communicate b
     path('add-Product-ajax/', add_Product_ajax, name='add_Product_ajax'),
 ```
 
-Finally, I had to implement all these functions into the final product. To do this I implemented the needed changes into the html file. To adapt the functions into the html file I had to use javascript and script tags to indicate where the script would start and the contents of it.
+Finally, I had to implement all these functions into the final product. To do this I implemented the needed changes into the html file. To adapt the functions into the html file I had to use javascript and script tags to indicate where the script would start and the contents of it. Furthermore, I added the needed functions to display error nessages by making a message container which will communicate with the AJAX create. I also added a function to clear messages using timeout so after 3 seconds all messages should be cleared. Finally, I needed to add messages in the modal to show when a input is not accepted for example if it is either empty, invalid, or an XSS attempt.
 
 ```javascript
 <script>
-async function getProductEntries() {
-    return fetch("{% url 'main:show_json' %}") 
-        .then(response => response.json())
-        .catch(error => console.error('Error fetching products:', error));
-}
-
-  async function refreshProductEntries() {
+    async function getProductEntries() {
+        return fetch("{% url 'main:show_json' %}") 
+            .then(response => response.json())
+            .catch(error => console.error('Error fetching products:', error));
+    }
+    
+    async function refreshProductEntries() {
         document.getElementById("product_entry_cards").innerHTML = "";
         document.getElementById("product_entry_cards").className = "";
         const productEntries = await getProductEntries(); // Fetch product entries
         let htmlString = "";
         let classNameString  = "";
-
+    
         if (productEntries.length === 0) {
-          classNameString  = "flex flex-col items-center justify-center min-h-[24rem] p-6";
+            classNameString  = "flex flex-col items-center justify-center min-h-[24rem] p-6";
             htmlString = `
             <div class="flex flex-col items-center justify-center min-h-[24rem] p-6">
                 <img src="{% static 'image/sad.png' %}" alt="No products available" class="w-32 h-32 mb-4"/>
@@ -593,112 +624,149 @@ async function getProductEntries() {
             </div>
             `;
         } else {
-          classNameString = "columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 w-full";
-productEntries.forEach((item) => {
-    htmlString += `
-    <div class="relative break-inside-avoid w-3/4 sm:w-5/6 lg:w-4/5 mx-auto">
-        <div class="relative top-5 bg-[#1f1f1f] shadow-md rounded-lg mb-6 break-inside-avoid flex flex-col border-2 border-purple-400 transition-transform duration-300 transform hover:rotate-3"> 
-            <div class="bg-[#2a2a2a] text-gray-200 p-4 rounded-t-lg border-b-2 border-purple-400">
-                <h3 class="font-bold text-xl mb-2">${item.fields.name}</h3>
-                <p class="text-gray-400">$${item.fields.price}</p>
-            </div>
-            <div class="p-4">
-                <p class="font-semibold text-lg mb-2 text-gray-300">Category</p>
-                <p class="text-gray-400 mb-2">${item.fields.category ? item.fields.category : 'Uncategorized'}</p>
-                <p class="font-semibold text-lg mb-2 text-gray-300">Description</p>
-                <p class="text-gray-400 mb-2">${item.fields.description}</p>
-                <div class="mt-4">
-                    <p class="text-gray-300 font-semibold mb-2">Stock Available</p>
-                    <span class="text-sm font-semibold inline-block py-1 px-2 rounded-full bg-green-800 text-green-300">
-                        ${item.fields.stock > 0 ? item.fields.stock + " items in stock" : "Out of stock"}
-                    </span>
+            classNameString = "columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 w-full";
+            productEntries.forEach((item) => {
+                // Sanitize the data using DOMPurify
+                const name = DOMPurify.sanitize(item.fields.name);
+                const price = DOMPurify.sanitize(item.fields.price);
+                const description = DOMPurify.sanitize(item.fields.description);
+                const stock = DOMPurify.sanitize(item.fields.stock);
+                const category = DOMPurify.sanitize(item.fields.category);
+                const pk = DOMPurify.sanitize(item.pk);
+    
+                htmlString += `
+                <div class="relative break-inside-avoid w-3/4 sm:w-5/6 lg:w-4/5 mx-auto">
+                    <div class="relative top-5 bg-[#1f1f1f] shadow-md rounded-lg mb-6 break-inside-avoid flex flex-col border-2 border-purple-400 transition-transform duration-300 transform hover:rotate-3"> 
+                        <div class="bg-[#2a2a2a] text-gray-200 p-4 rounded-t-lg border-b-2 border-purple-400">
+                            <h3 class="font-bold text-xl mb-2">${name}</h3>
+                            <p class="text-gray-400">$${price}</p>
+                        </div>
+                        <div class="p-4">
+                            <p class="font-semibold text-lg mb-2 text-gray-300">Category</p>
+                            <p class="text-gray-400 mb-2">${category ? category : 'Uncategorized'}</p>
+                            <p class="font-semibold text-lg mb-2 text-gray-300">Description</p>
+                            <p class="text-gray-400 mb-2">${description}</p>
+                            <div class="mt-4">
+                                <p class="text-gray-300 font-semibold mb-2">Stock Available</p>
+                                <span class="text-sm font-semibold inline-block py-1 px-2 rounded-full bg-green-800 text-green-300">
+                                    ${stock > 0 ? stock + " items in stock" : "Out of stock"}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex justify-end p-4 space-x-2">
+                            <a href="/edit-Product/${pk}" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full p-2 transition duration-300 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L13 4.172l2.828 2.828 1.586-1.586a2 2 0 000-2.828zM12 5l-9 9V17h3l9-9-3-3z"/>
+                                </svg>          
+                            </a>
+                            <a href="/delete-Product/${pk}" class="bg-red-700 hover:bg-red-600 text-white rounded-full p-2 transition duration-300 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 2a2 2 0 00-2 2H4v2h12V4h-4a2 2 0 00-2-2zM6 8v8a2 2 0 002 2h4a2 2 0 002-2V8H6zm4 2a1 1 0 011 1v4a1 1 0 11-2 0v-4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                </svg>       
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-end p-4 space-x-2">
-                <a href="/edit-Product/${item.pk}" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full p-2 transition duration-300 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                </a>
-                <a href="/delete-Product/${item.pk}" class="bg-red-700 hover:bg-red-600 text-white rounded-full p-2 transition duration-300 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </div>
-    `;
-});
-
-
-
+                `;
+            });
         }
         document.getElementById("product_entry_cards").className = classNameString;
         document.getElementById("product_entry_cards").innerHTML = htmlString;
     }
-
+    
     refreshProductEntries();
-
+    
     const modal = document.getElementById('crudModal');
     const modalContent = document.getElementById('crudModalContent');
-
+    
     function showModal() {
-        const modal = document.getElementById('crudModal');
-        const modalContent = document.getElementById('crudModalContent');
-
         modal.classList.remove('hidden'); 
         setTimeout(() => {
-        modalContent.classList.remove('opacity-0', 'scale-95');
-        modalContent.classList.add('opacity-100', 'scale-100');
+            modalContent.classList.remove('opacity-0', 'scale-95');
+            modalContent.classList.add('opacity-100', 'scale-100');
         }, 50); 
     }
-
+    
     function hideModal() {
-        const modal = document.getElementById('crudModal');
-        const modalContent = document.getElementById('crudModalContent');
-
         modalContent.classList.remove('opacity-100', 'scale-100');
         modalContent.classList.add('opacity-0', 'scale-95');
-
+    
         setTimeout(() => {
-        modal.classList.add('hidden');
+            modal.classList.add('hidden');
         }, 150); 
     }
-
+    
     document.getElementById("cancelButton").addEventListener("click", hideModal);
     document.getElementById("closeModalBtn").addEventListener("click", hideModal);
+    
+    function clearMessagesAfterTimeout(timeout = 3000) {
+        // Find all message divs based on their CSS classes (success, error, etc.)
+        const messageElements = document.querySelectorAll('.bg-green-100, .bg-red-100, .bg-blue-100, .bg-yellow-100');
+        
+        // Set a timeout to clear each message after the specified timeout
+        setTimeout(() => {
+            messageElements.forEach((messageElement) => {
+                // Remove the message element from the DOM
+                messageElement.remove();
+            });
+        }, timeout);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Automatically clear messages after 3 seconds for server-side messages
+        clearMessagesAfterTimeout(3000);
+    });
+
+
 
     function addProductEntry() {
-    fetch("{% url 'main:add_Product_ajax' %}", {
-        method: "POST",
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}', // Ensure CSRF token is added
-        },
-        body: new FormData(document.querySelector('#productEntryForm')),
-    })
-    .then(response => {
-        if (response.ok) {
-            refreshProductEntries(); // Refresh product list after adding
-            hideModal(); // Hide modal
-            document.getElementById("productEntryForm").reset(); // Reset form
-        } else {
-            console.error("Error adding product");
-        }
-    })
-    .catch(error => console.error('Error:', error));
+        fetch("{% url 'main:add_Product_ajax' %}", {
+            method: "POST",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: new FormData(document.querySelector('#productEntryForm')),
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            const messageContainer = document.getElementById('messages'); // Main message container for success
+            const productEntryError = document.getElementById("productEntryError"); // Modal error container
 
-    return false;
-}
+            if (status >= 200 && status < 300) {
+                // Show success message in the main message container
+                messageContainer.innerHTML = `
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                        Product was added successfully!
+                    </div>
+                `;
+                refreshProductEntries(); // Refresh product list after adding
+                hideModal(); // Hide modal
+                document.getElementById("productEntryForm").reset(); // Reset form
+                productEntryError.textContent = ''; // Clear any previous errors
+                clearMessagesAfterTimeout(3000); // Automatically clear the success message
+            } else {
+                // Show error message at the bottom of the modal
+                productEntryError.textContent = body.error || 'An error occurred.';
+            }
+        })
+        .catch(error => {
+            const productEntryError = document.getElementById("productEntryError");
+            productEntryError.textContent = 'An unexpected error occurred.';
+            console.error('Error:', error);
+        });
 
-document.getElementById("productEntryForm").addEventListener("submit", (e) => {
+        return false;
+    }
+
+
+
+    document.getElementById("productEntryForm").addEventListener("submit", (e) => {
     e.preventDefault();
     addProductEntry();
-});
+})
 
 
-
-</script>
+    </script>
 ```
 
-The functions I have created includes the ability to use AJAX GET and recieve the data in JSON form. This is supplemented by the modifications in the views.py to only take the values by filter 'user' so that it is still done safely. Then there is the refreshProductEntries function which is designed to refresh asychronously. How this worked was first displaying each data in the form of a card through the html snippet. First it strips all existing data and the fetches the newest data in the card form. It has to be asynchronous since we are waiting for the promise that the data is fetched properly. The remaining function is designed to display the modal which is the main component of the AJAX POST function. This is implmeneted in the form of a button which substitutes the previous create function. WHenever the button is pressed a new modal is made and with the aid of the views.py it will create a new entry when the data is valid. Strip tags are used to prevent XSS attacks by striping the data of the malicious data.
+Further functions I have created includes the ability to use AJAX GET and recieve the data in JSON form. This is supplemented by the modifications in the views.py to only take the values by filter 'user' so that it is still done safely. Then there is the refreshProductEntries function which is designed to refresh asychronously. How this worked was first displaying each data in the form of a card through the html snippet. First it strips all existing data and the fetches the newest data in the card form. It has to be asynchronous since we are waiting for the promise that the data is fetched properly. The remaining function is designed to display the modal which is the main component of the AJAX POST function. This is implmeneted in the form of a button which substitutes the previous create function. WHenever the button is pressed a new modal is made and with the aid of the views.py it will create a new entry when the data is valid. Strip tags are used to prevent XSS attacks by striping the data of the malicious data.
