@@ -506,22 +506,27 @@ After this I made a navbar.html and made it be included it every html file where
 <h2><b>Assignment 6</b></h2>
 
 <b>Benefits of Using JavaScript in Developing Web Applications?</b>
+<br>
 JavaScript can aid in developing web applications because it enables dynamic elements directly within the browser, providing users with real-time responsiveness. JavaScript can run on the client side, reducing server load and allowing smoother, faster user interactions. Its versatility, including libraries and frameworks like React or Vue.js, supports modern front-end development, making it easier to create features and scalable applications with enhanced user experiences. Moreover, JavaScript enables asynchronous programming, which facilitates the handling of data-driven tasks like API calls without disrupting the user interface.
 
 <b>Why We Need to Use await When Calling fetch?</b>
+<br>
 The use of await when calling fetch is crucial because fetch is asynchronous, meaning it returns a promise that resolves when the network request is complete. If await is not used, the program would continue executing the next lines of code without waiting for the response, which could result in incomplete data processing or unexpected errors. By using await, we ensure the function pauses until the fetch call completes, allowing the program to handle the response correctly before proceeding.
 
 <b>Why We Need to Use the csrf_exempt Decorator for AJAX POST?</b>
+<br>
 The csrf_exempt decorator is necessary on views used for AJAX POST requests to bypass Django's CSRF protection, which is designed to prevent unauthorized POST requests. Since AJAX calls typically don’t include the CSRF token automatically Django would block such requests without the token causing a failure. The csrf_exempt decorator disables this validation, allowing the view to accept the AJAX request without raising a CSRF error.
 
 <b>Why Input Sanitization Must Be Done on the Back-End in Addition to the Front-End?</b>
+<br>
 User input sanitization should also be done on the back-end, even if sanitization occurs on the front-end, because client-side validation can be bypassed. Users could manipulate client-side code or send requests directly to the server, exposing the system to injection attacks or other vulnerabilities. By sanitizing input on the server, the system ensures that data entering the application is safe, regardless of how it is submitted. This layered approach strengthens security and protects against potential exploits.
 
 <b>Why Input Sanitization Must Be Done on the Back-End in Addition to the Front-End?</b>
+<br>
 User input sanitization should also be done on the back-end, even if sanitization occurs on the front-end, because client-side validation can be bypassed. Users could manipulate client-side code or send requests directly to the server, exposing the system to injection attacks or other vulnerabilities. By sanitizing input on the server, the system ensures that data entering the application is safe, regardless of how it is submitted. This layered approach strengthens security and protects against potential exploits.
 
 <b>Checklist Implementation</b>
-
+<br>
 I needed to setup the AJAX GET function in the views.py section of the code by first changing how the XML and JSON is taken so that it was based on the user accessing the data. In this case I will use the json version. Since the filter is by user request it will only get based of the user which is added on the data entry. This filtering ensures that each access is done so safely and only based on what that users own.
 
 ```python
