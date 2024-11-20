@@ -1,11 +1,10 @@
-from django.shortcuts import render, redirect, get_object_or_404, reverse   # Add import redirect at this line
-from main.forms import ProductForm
+from django.shortcuts import render, redirect, get_object_or_404, reverse
+from main.forms import ProductForm, CustomUserCreationForm
 from main.models import Product
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.core import serializers
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib import messages  # Already imported
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 import datetime
@@ -16,11 +15,9 @@ from django.utils.html import strip_tags
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.shortcuts import render, redirect
-from django.contrib import messages
 from django.contrib.auth.models import User
 from django import forms
-from main.forms import CustomUserCreationForm
+import json
 
 
 
@@ -131,9 +128,9 @@ def login_user(request):
         if form.is_valid():
             user = form.get_user()
             if user is not None:
-                login(request, user)
+                login(request, user) 
                 response = HttpResponseRedirect(reverse("main:show_main"))
-                response.set_cookie('last_login', str(datetime.datetime.now()))
+                response.set_cookie('last_login', )
                 return response
         else:
             # If form is invalid, send an error message
@@ -202,3 +199,34 @@ def add_Product_ajax(request):
 
     except Exception as e:
         return JsonResponse({'error': 'An error occurred while adding the product.'}, status=400)
+
+
+@csrf_exempt
+def create_product_flutter(request):
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from the request body
+            data = json.loads(request.body)
+
+            # Create a new Product object
+            new_product = Product.objects.create(
+                user=request.user,
+                name=data["name"],
+                price=int(data["price"]),
+                description=data["description"],
+                stock=int(data["stock"]),
+                category=data["category"]
+            )
+
+            # Save the new Product
+            new_product.save()
+
+            return JsonResponse({"status": "success"}, status=200)
+        except KeyError as e:
+            # Handle missing fields in the request data
+            return JsonResponse({"status": "error", "message": f"Missing field: {str(e)}"}, status=400)
+        except ValueError as e:
+            # Handle invalid data (e.g., price or stock not convertible to int)
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid request method."}, status=405)
